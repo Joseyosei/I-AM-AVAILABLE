@@ -16,7 +16,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import logo from '@/assets/logo.png';
+
 
 const stats = [
   { value: '1,247', label: 'Active Profiles' },
@@ -96,18 +96,12 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex justify-center mb-8">
-              <img src={logo} alt="I Am Available" className="h-16 md:h-20 w-auto" />
-            </div>
             <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
               Signal Your{' '}
               <span className="text-gradient">Availability</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-4 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
               Where professionals openly signal they're available for collaboration.
-            </p>
-            <p className="text-sm text-muted-foreground mb-10 max-w-xl mx-auto italic">
-              Like Bella Nazzari's "open to work"—but for everyone.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">

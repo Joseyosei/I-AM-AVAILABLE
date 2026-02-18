@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import logo from '@/assets/logo.png';
 
 export function Footer() {
   return (
@@ -9,7 +8,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src={logo} alt="I Am Available" className="h-9 w-auto" />
+              <span className="font-serif text-2xl font-bold text-primary tracking-tight">IAA</span>
             </Link>
             <p className="text-muted-foreground text-sm max-w-md">
               The platform for professionals to signal their availability for collaboration.

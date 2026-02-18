@@ -6,9 +6,10 @@ import {
   User, 
   Settings, 
   LogOut, 
-  Sparkles,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Briefcase
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -19,6 +20,8 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/dashboard/profile', icon: User, label: 'Profile' },
+  { href: '/dashboard/chat', icon: MessageSquare, label: 'Messages' },
+  { href: '/careers', icon: Briefcase, label: 'Careers' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -41,10 +44,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header className="md:hidden sticky top-0 z-50 bg-background border-b border-border">
         <div className="flex items-center justify-between p-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-serif text-lg font-semibold">I Am Available</span>
+            <span className="font-serif text-2xl font-bold text-primary tracking-tight">IAA</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -68,10 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Logo */}
             <div className="hidden md:flex items-center gap-2 p-6 border-b border-border">
               <Link to="/" className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-                  <Sparkles className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <span className="font-serif text-lg font-semibold">I Am Available</span>
+                <span className="font-serif text-2xl font-bold text-primary tracking-tight">IAA</span>
               </Link>
             </div>
 
