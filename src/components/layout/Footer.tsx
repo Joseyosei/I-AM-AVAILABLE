@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export function Footer() {
   return (
@@ -9,10 +9,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-serif text-xl font-semibold">I Am Available</span>
+              <img src={logo} alt="I Am Available" className="h-9 w-auto" />
             </Link>
             <p className="text-muted-foreground text-sm max-w-md">
               The platform for professionals to signal their availability for collaboration.
@@ -37,6 +34,11 @@ export function Footer() {
               <li>
                 <Link to="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
                   Create Profile
+                </Link>
+              </li>
+              <li>
+                <Link to="/docs" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Documentation
                 </Link>
               </li>
             </ul>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { UserProfile, OPEN_TO_LABELS } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +27,7 @@ export function ProfileCard({ profile }: ProfileCardProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
+      <Link to={`/profile/${profile.id}`} className="flex items-start gap-4 mb-4 group">
         <Avatar className="w-16 h-16 border-2 border-border">
           <AvatarImage src={profile.avatar} alt={profile.name} />
           <AvatarFallback className="bg-secondary text-lg font-medium">
@@ -34,10 +35,10 @@ export function ProfileCard({ profile }: ProfileCardProps) {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <h3 className="font-serif text-lg font-semibold truncate">{profile.name}</h3>
+          <h3 className="font-serif text-lg font-semibold truncate group-hover:text-primary transition-colors">{profile.name}</h3>
           <p className="text-muted-foreground text-sm truncate">{profile.role}</p>
         </div>
-      </div>
+      </Link>
 
       {/* Location & Availability */}
       <div className="flex items-center justify-between mb-4">
