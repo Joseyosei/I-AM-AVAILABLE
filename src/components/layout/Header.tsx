@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import logo from '@/assets/logo.png';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Header() {
   const { isAuthenticated, logout } = useAuth();
@@ -12,6 +12,7 @@ export function Header() {
 
   const navLinks = [
     { href: '/directory', label: 'Directory' },
+    { href: '/careers', label: 'Careers' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/docs', label: 'Docs' },
   ];
@@ -24,7 +25,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="I Am Available" className="h-9 w-auto" />
+            <span className="font-serif text-2xl font-bold text-primary tracking-tight">IAA</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -45,7 +46,8 @@ export function Header() {
           </nav>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {isAuthenticated ? (
               <>
                 <Link to="/dashboard">
