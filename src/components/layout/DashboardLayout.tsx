@@ -9,7 +9,11 @@ import {
   Menu,
   X,
   MessageSquare,
-  Briefcase
+  Briefcase,
+  BarChart3,
+  Bell,
+  Bookmark,
+  Plus,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,7 +24,11 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/dashboard/profile', icon: User, label: 'Profile' },
+  { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/dashboard/notifications', icon: Bell, label: 'Notifications' },
   { href: '/dashboard/chat', icon: MessageSquare, label: 'Messages' },
+  { href: '/dashboard/saved', icon: Bookmark, label: 'Saved Profiles' },
+  { href: '/dashboard/post-job', icon: Plus, label: 'Post a Job' },
   { href: '/careers', icon: Briefcase, label: 'Careers' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];

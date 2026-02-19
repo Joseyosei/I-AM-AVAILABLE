@@ -13,6 +13,10 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProfileEditor from "./pages/ProfileEditor";
 import Settings from "./pages/Settings";
+import Analytics from "./pages/Analytics";
+import Notifications from "./pages/Notifications";
+import SavedProfiles from "./pages/SavedProfiles";
+import PostJob from "./pages/PostJob";
 import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 import Careers from "./pages/Careers";
@@ -38,6 +42,10 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/profile" element={<ProfileEditor />} />
+              <Route path="/dashboard/analytics" element={<Analytics />} />
+              <Route path="/dashboard/notifications" element={<Notifications />} />
+              <Route path="/dashboard/saved" element={<SavedProfiles />} />
+              <Route path="/dashboard/post-job" element={<PostJob />} />
               <Route path="/dashboard/chat" element={<Chat />} />
               <Route path="/dashboard/settings" element={<Settings />} />
               <Route path="/docs" element={<Documentation />} />
