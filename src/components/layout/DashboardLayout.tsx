@@ -10,7 +10,7 @@ import {
   X,
   MessageSquare,
   Briefcase,
-  BarChart3,
+  ChartColumn,
   Bell,
   Bookmark,
   Plus,
@@ -24,7 +24,7 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/dashboard/profile', icon: User, label: 'Profile' },
-  { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/dashboard/analytics', icon: ChartColumn, label: 'Analytics' },
   { href: '/dashboard/notifications', icon: Bell, label: 'Notifications' },
   { href: '/dashboard/chat', icon: MessageSquare, label: 'Messages' },
   { href: '/dashboard/saved', icon: Bookmark, label: 'Saved Profiles' },
