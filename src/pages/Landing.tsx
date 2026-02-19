@@ -16,12 +16,55 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react';
 
+function useCountUp(target: number, duration = 2000) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
+          const start = performance.now();
+          const step = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(eased * target));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return { count, ref };
+}
+
+function AnimatedStat({ target, label }: { target: number; label: string }) {
+  const { count, ref } = useCountUp(target);
+  return (
+    <motion.div ref={ref} className="stat-card" variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}>
+      <p className="font-serif text-4xl md:text-5xl font-bold text-primary mb-2">
+        {count.toLocaleString()}
+      </p>
+      <p className="text-muted-foreground">{label}</p>
+    </motion.div>
+  );
+}
 
 const stats = [
-  { value: '1,247', label: 'Active Profiles' },
-  { value: '3,842', label: 'Connections Made' },
-  { value: '127', label: 'Companies Founded' },
+  { value: 1247, label: 'Active Profiles' },
+  { value: 3842, label: 'Connections Made' },
+  { value: 127, label: 'Companies Founded' },
 ];
 
 const features = [
@@ -131,16 +174,7 @@ export default function Landing() {
             viewport={{ once: true }}
           >
             {stats.map((stat) => (
-              <motion.div
-                key={stat.label}
-                className="stat-card"
-                variants={fadeInUp}
-              >
-                <p className="font-serif text-4xl md:text-5xl font-bold text-primary mb-2">
-                  {stat.value}
-                </p>
-                <p className="text-muted-foreground">{stat.label}</p>
-              </motion.div>
+              <AnimatedStat key={stat.label} target={stat.value} label={stat.label} />
             ))}
           </motion.div>
         </div>
