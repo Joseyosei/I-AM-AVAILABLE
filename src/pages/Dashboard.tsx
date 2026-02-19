@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, MousePointerClick, Sparkles, Edit, Users, ArrowUpRight, BarChart3, Bell, Bookmark, Plus } from 'lucide-react';
+import { Eye, MousePointerClick, Sparkles, Edit, Users, ArrowUpRight, ChartColumn, Bell, Bookmark, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function getProfileCompleteness(user: any) {
@@ -118,7 +118,7 @@ export default function Dashboard() {
           <h2 className="font-serif text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-4">
             <Link to="/dashboard/profile"><Button className="gap-2"><Edit className="w-4 h-4" />Edit Your Profile</Button></Link>
-            <Link to="/dashboard/analytics"><Button variant="outline" className="gap-2"><BarChart3 className="w-4 h-4" />View Analytics</Button></Link>
+            <Link to="/dashboard/analytics"><Button variant="outline" className="gap-2"><ChartColumn className="w-4 h-4" />View Analytics</Button></Link>
             <Link to="/dashboard/saved"><Button variant="outline" className="gap-2"><Bookmark className="w-4 h-4" />Saved Profiles</Button></Link>
             <Link to="/dashboard/post-job"><Button variant="outline" className="gap-2"><Plus className="w-4 h-4" />Post a Job</Button></Link>
             <Link to="/directory"><Button variant="outline" className="gap-2"><Users className="w-4 h-4" />View Directory</Button></Link>
