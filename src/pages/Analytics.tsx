@@ -38,11 +38,10 @@ const sourceData = [
 const PIE_COLORS = ['hsl(160, 84%, 39%)', 'hsl(160, 60%, 55%)', 'hsl(160, 40%, 70%)', 'hsl(220, 13%, 70%)'];
 
 export default function Analytics() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (loading) return <DashboardLayout><div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const summaryStats = [
     { label: 'Total Views', value: '1,247', change: '+12%', up: true, icon: Eye },

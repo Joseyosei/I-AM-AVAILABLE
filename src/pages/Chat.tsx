@@ -89,15 +89,14 @@ const mockMessages: Record<string, Message[]> = {
 };
 
 export default function Chat() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [selectedContact, setSelectedContact] = useState<ChatContact>(mockContacts[0]);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [messages, setMessages] = useState(mockMessages);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  if (loading) return <DashboardLayout><div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   const currentMessages = messages[selectedContact.id] || [];
 
