@@ -14,7 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      endorsements: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          profile_id: string
+          relationship: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          relationship?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endorsements_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          apply_url: string | null
+          company: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          job_type: string
+          location: string
+          posted_by: string
+          salary_range: string | null
+          skills: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          apply_url?: string | null
+          company?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          job_type?: string
+          location?: string
+          posted_by: string
+          salary_range?: string | null
+          skills?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          apply_url?: string | null
+          company?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          job_type?: string
+          location?: string
+          posted_by?: string
+          salary_range?: string | null
+          skills?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          availability: string
+          avatar: string
+          bio: string
+          calendar_link: string | null
+          contact_clicks: number
+          contact_email: string | null
+          created_at: string
+          email: string
+          featured: boolean
+          id: string
+          last_active: string
+          location: string
+          name: string
+          open_to: string[]
+          portfolio_links: string[]
+          profile_views: number
+          role: string
+          skills: string[]
+          telegram: string | null
+          tier: string
+          twitter: string | null
+          user_id: string
+        }
+        Insert: {
+          availability?: string
+          avatar?: string
+          bio?: string
+          calendar_link?: string | null
+          contact_clicks?: number
+          contact_email?: string | null
+          created_at?: string
+          email?: string
+          featured?: boolean
+          id?: string
+          last_active?: string
+          location?: string
+          name?: string
+          open_to?: string[]
+          portfolio_links?: string[]
+          profile_views?: number
+          role?: string
+          skills?: string[]
+          telegram?: string | null
+          tier?: string
+          twitter?: string | null
+          user_id: string
+        }
+        Update: {
+          availability?: string
+          avatar?: string
+          bio?: string
+          calendar_link?: string | null
+          contact_clicks?: number
+          contact_email?: string | null
+          created_at?: string
+          email?: string
+          featured?: boolean
+          id?: string
+          last_active?: string
+          location?: string
+          name?: string
+          open_to?: string[]
+          portfolio_links?: string[]
+          profile_views?: number
+          role?: string
+          skills?: string[]
+          telegram?: string | null
+          tier?: string
+          twitter?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          saved_profile_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          saved_profile_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          saved_profile_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_profiles_saved_profile_id_fkey"
+            columns: ["saved_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

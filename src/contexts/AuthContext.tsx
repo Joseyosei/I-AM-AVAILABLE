@@ -1,73 +1,145 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { UserProfile } from '@/lib/types';
-import { currentUser as initialUser } from '@/lib/mock-data';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  role: string;
+  location: string;
+  bio: string;
+  avatar: string;
+  availability: string;
+  open_to: string[];
+  skills: string[];
+  contact_email: string | null;
+  twitter: string | null;
+  telegram: string | null;
+  calendar_link: string | null;
+  portfolio_links: string[];
+  tier: string;
+  featured: boolean;
+  profile_views: number;
+  contact_clicks: number;
+  created_at: string;
+  last_active: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: UserProfile | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  updateProfile: (updates: Partial<UserProfile>) => void;
-  upgradeTier: (tier: 'pro' | 'premium') => void;
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ error?: string; needsConfirmation?: boolean }>;
+  logout: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (email && password.length >= 8) {
-      setIsAuthenticated(true);
-      setUser({ ...initialUser, email });
-      return true;
-    }
-    return false;
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (data) setProfile(data as Profile);
+    return data as Profile | null;
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (name && email && password.length >= 8) {
-      setIsAuthenticated(true);
-      setUser({ ...initialUser, name, email });
-      return true;
-    }
-    return false;
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Use setTimeout to avoid deadlock with Supabase auth
+          setTimeout(() => fetchProfile(session.user.id), 0);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return {};
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
+  const signup = async (name: string, email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    if (error) return { error: error.message };
+    // Check if email confirmation is needed
+    if (data.user && !data.session) {
+      return { needsConfirmation: true };
+    }
+    return {};
   };
 
-  const updateProfile = (updates: Partial<UserProfile>) => {
-    if (user) {
-      setUser({ ...user, ...updates });
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setProfile(null);
+  };
+
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('user_id', user.id);
+    if (!error) {
+      setProfile(prev => prev ? { ...prev, ...updates } : null);
     }
   };
 
-  const upgradeTier = (tier: 'pro' | 'premium') => {
-    if (user) {
-      setUser({ ...user, tier, featured: true });
-    }
+  const refreshProfile = async () => {
+    if (user) await fetchProfile(user.id);
   };
 
   return (
     <AuthContext.Provider value={{
-      isAuthenticated,
+      isAuthenticated: !!session,
       user,
+      profile,
+      session,
+      loading,
       login,
       signup,
       logout,
       updateProfile,
-      upgradeTier,
+      refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>
