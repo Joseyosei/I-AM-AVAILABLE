@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   MapPin, 
   Briefcase, 
@@ -11,7 +12,7 @@ import {
   Search, 
   Building2, 
   ArrowRight,
-  Filter
+  Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -25,100 +26,33 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Job {
   id: string;
   title: string;
   company: string;
   location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Freelance';
-  salary: string;
-  posted: string;
+  job_type: string;
+  salary_range: string | null;
+  created_at: string;
   description: string;
   skills: string[];
-  remote: boolean;
+  apply_url: string | null;
 }
 
-const mockJobs: Job[] = [
-  {
-    id: '1',
-    title: 'Senior Full-Stack Developer',
-    company: 'TechVentures Inc.',
-    location: 'San Francisco, CA',
-    type: 'Full-time',
-    salary: '$150k - $200k',
-    posted: '2 days ago',
-    description: 'We\'re looking for an experienced full-stack developer to lead our product engineering team. You\'ll work on building scalable web applications using React, Node.js, and PostgreSQL.',
-    skills: ['React', 'Node.js', 'PostgreSQL', 'TypeScript'],
-    remote: true,
-  },
-  {
-    id: '2',
-    title: 'Product Designer',
-    company: 'DesignCraft Studio',
-    location: 'New York, NY',
-    type: 'Full-time',
-    salary: '$120k - $160k',
-    posted: '5 days ago',
-    description: 'Join our design team to create beautiful, intuitive interfaces for our SaaS platform. Experience with Figma and design systems required.',
-    skills: ['Figma', 'UI/UX', 'Design Systems', 'Prototyping'],
-    remote: false,
-  },
-  {
-    id: '3',
-    title: 'Growth Marketing Consultant',
-    company: 'ScaleUp Labs',
-    location: 'Austin, TX',
-    type: 'Contract',
-    salary: '$100/hr',
-    posted: '1 week ago',
-    description: 'Help early-stage startups build and execute growth strategies. Must have experience with B2B SaaS marketing and analytics.',
-    skills: ['Growth Marketing', 'Analytics', 'SEO', 'Content Strategy'],
-    remote: true,
-  },
-  {
-    id: '4',
-    title: 'Startup Co-Founder (CTO)',
-    company: 'Stealth Startup',
-    location: 'Remote',
-    type: 'Full-time',
-    salary: 'Equity: 15-25%',
-    posted: '3 days ago',
-    description: 'Looking for a technical co-founder to build an AI-powered logistics platform. Pre-seed funded with $500K. Need someone who can build the MVP and hire the first engineers.',
-    skills: ['AI/ML', 'Python', 'System Architecture', 'Leadership'],
-    remote: true,
-  },
-  {
-    id: '5',
-    title: 'Freelance Brand Designer',
-    company: 'Bloom Agency',
-    location: 'London, UK',
-    type: 'Freelance',
-    salary: '$80 - $120/hr',
-    posted: '1 day ago',
-    description: 'We need a talented brand designer for a 3-month project creating visual identity for a fintech startup. Portfolio required.',
-    skills: ['Branding', 'Illustration', 'Typography', 'Adobe Suite'],
-    remote: true,
-  },
-  {
-    id: '6',
-    title: 'DevOps Engineer',
-    company: 'CloudFirst Solutions',
-    location: 'Seattle, WA',
-    type: 'Full-time',
-    salary: '$140k - $180k',
-    posted: '4 days ago',
-    description: 'Manage and optimize our cloud infrastructure on AWS. Experience with Kubernetes, Terraform, and CI/CD pipelines required.',
-    skills: ['AWS', 'Kubernetes', 'Terraform', 'CI/CD'],
-    remote: true,
-  },
-];
-
 const typeColors: Record<string, string> = {
-  'Full-time': 'bg-primary/10 text-primary',
-  'Part-time': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  'Contract': 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
-  'Freelance': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  'fulltime': 'bg-primary/10 text-primary',
+  'part-time': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  'contract': 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+  'freelance': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+};
+
+const typeLabels: Record<string, string> = {
+  'fulltime': 'Full-time',
+  'part-time': 'Part-time',
+  'contract': 'Contract',
+  'freelance': 'Freelance',
 };
 
 export default function Careers() {
@@ -126,15 +60,30 @@ export default function Careers() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
   const { toast } = useToast();
 
-  const filtered = mockJobs.filter((job) => {
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (!error && data) setJobs(data);
+      setLoadingJobs(false);
+    };
+    fetchJobs();
+  }, []);
+
+  const filtered = jobs.filter((job) => {
     const matchesSearch =
       !search ||
       job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.company.toLowerCase().includes(search.toLowerCase()) ||
       job.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
-    const matchesType = typeFilter === 'all' || job.type === typeFilter;
+    const matchesType = typeFilter === 'all' || job.job_type === typeFilter;
     return matchesSearch && matchesType;
   });
 
@@ -176,14 +125,14 @@ export default function Careers() {
               />
             </div>
             <div className="flex gap-2 flex-wrap">
-              {['all', 'Full-time', 'Contract', 'Freelance'].map((type) => (
+              {['all', 'fulltime', 'contract', 'freelance'].map((type) => (
                 <Button
                   key={type}
                   variant={typeFilter === type ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setTypeFilter(type)}
                 >
-                  {type === 'all' ? 'All Types' : type}
+                  {type === 'all' ? 'All Types' : typeLabels[type] || type}
                 </Button>
               ))}
             </div>
@@ -191,7 +140,11 @@ export default function Careers() {
 
           {/* Job Listings */}
           <div className="space-y-4">
-            {filtered.length === 0 ? (
+            {loadingJobs ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="text-center py-16">
                 <Briefcase className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-serif text-xl font-semibold mb-2">No jobs found</h3>
@@ -233,21 +186,22 @@ export default function Careers() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2 text-sm shrink-0">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${typeColors[job.type]}`}>
-                        {job.type}
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${typeColors[job.job_type] || 'bg-secondary text-foreground'}`}>
+                        {typeLabels[job.job_type] || job.job_type}
                       </span>
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="w-3.5 h-3.5" />
-                        {job.location}
-                        {job.remote && <Badge variant="outline" className="text-xs ml-1">Remote</Badge>}
+                        {job.location || 'Remote'}
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <DollarSign className="w-3.5 h-3.5" />
-                        {job.salary}
-                      </div>
+                      {job.salary_range && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          {job.salary_range}
+                        </div>
+                      )}
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="w-3.5 h-3.5" />
-                        {job.posted}
+                        {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
                       </div>
                     </div>
                   </div>

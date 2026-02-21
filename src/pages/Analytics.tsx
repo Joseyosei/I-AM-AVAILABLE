@@ -9,45 +9,50 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
 } from 'recharts';
 
-const viewsData = [
-  { day: 'Mon', views: 12, clicks: 3 },
-  { day: 'Tue', views: 19, clicks: 5 },
-  { day: 'Wed', views: 15, clicks: 4 },
-  { day: 'Thu', views: 28, clicks: 8 },
-  { day: 'Fri', views: 32, clicks: 11 },
-  { day: 'Sat', views: 24, clicks: 7 },
-  { day: 'Sun', views: 18, clicks: 6 },
-];
-
-const monthlyData = [
-  { month: 'Sep', views: 180 },
-  { month: 'Oct', views: 240 },
-  { month: 'Nov', views: 310 },
-  { month: 'Dec', views: 420 },
-  { month: 'Jan', views: 520 },
-  { month: 'Feb', views: 610 },
-];
-
-const sourceData = [
-  { name: 'Directory', value: 45 },
-  { name: 'Search', value: 25 },
-  { name: 'Direct Link', value: 20 },
-  { name: 'Referral', value: 10 },
-];
-
 const PIE_COLORS = ['hsl(160, 84%, 39%)', 'hsl(160, 60%, 55%)', 'hsl(160, 40%, 70%)', 'hsl(220, 13%, 70%)'];
 
 export default function Analytics() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, profile, loading } = useAuth();
 
   if (loading) return <DashboardLayout><div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !profile) return <Navigate to="/login" replace />;
+
+  const totalViews = profile.profile_views;
+  const totalClicks = profile.contact_clicks;
+  const conversionRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
+
+  // For new users, charts will show zeros
+  const viewsData = [
+    { day: 'Mon', views: 0, clicks: 0 },
+    { day: 'Tue', views: 0, clicks: 0 },
+    { day: 'Wed', views: 0, clicks: 0 },
+    { day: 'Thu', views: 0, clicks: 0 },
+    { day: 'Fri', views: 0, clicks: 0 },
+    { day: 'Sat', views: 0, clicks: 0 },
+    { day: 'Sun', views: 0, clicks: 0 },
+  ];
+
+  const monthlyData = [
+    { month: 'Sep', views: 0 },
+    { month: 'Oct', views: 0 },
+    { month: 'Nov', views: 0 },
+    { month: 'Dec', views: 0 },
+    { month: 'Jan', views: 0 },
+    { month: 'Feb', views: totalViews },
+  ];
+
+  const sourceData = [
+    { name: 'Directory', value: totalViews > 0 ? 45 : 0 },
+    { name: 'Search', value: totalViews > 0 ? 25 : 0 },
+    { name: 'Direct Link', value: totalViews > 0 ? 20 : 0 },
+    { name: 'Referral', value: totalViews > 0 ? 10 : 0 },
+  ];
 
   const summaryStats = [
-    { label: 'Total Views', value: '1,247', change: '+12%', up: true, icon: Eye },
-    { label: 'Contact Clicks', value: '89', change: '+8%', up: true, icon: MousePointerClick },
-    { label: 'Profile Rank', value: '#24', change: '+3', up: true, icon: TrendingUp },
-    { label: 'Conversion Rate', value: '7.1%', change: '-0.3%', up: false, icon: ArrowUpRight },
+    { label: 'Total Views', value: totalViews.toLocaleString(), change: totalViews > 0 ? '+12%' : '0%', up: true, icon: Eye },
+    { label: 'Contact Clicks', value: totalClicks.toLocaleString(), change: totalClicks > 0 ? '+8%' : '0%', up: true, icon: MousePointerClick },
+    { label: 'Profile Rank', value: totalViews > 0 ? `#${Math.max(1, 100 - totalViews)}` : 'N/A', change: totalViews > 0 ? '+3' : '0', up: true, icon: TrendingUp },
+    { label: 'Conversion Rate', value: `${conversionRate}%`, change: '0%', up: true, icon: ArrowUpRight },
   ];
 
   return (
@@ -82,26 +87,14 @@ export default function Analytics() {
         </div>
 
         {/* Views & Clicks Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-card border border-border rounded-lg p-6"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card border border-border rounded-lg p-6">
           <h2 className="font-serif text-xl font-semibold mb-4">Views & Clicks This Week</h2>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={viewsData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="day" className="text-xs" tick={{ fill: 'hsl(220, 9%, 46%)' }} />
               <YAxis className="text-xs" tick={{ fill: 'hsl(220, 9%, 46%)' }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  color: 'hsl(var(--foreground))',
-                }}
-              />
+              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))' }} />
               <Area type="monotone" dataKey="views" stroke="hsl(160, 84%, 39%)" fill="hsl(160, 84%, 39%)" fillOpacity={0.15} strokeWidth={2} />
               <Area type="monotone" dataKey="clicks" stroke="hsl(160, 60%, 55%)" fill="hsl(160, 60%, 55%)" fillOpacity={0.1} strokeWidth={2} />
             </AreaChart>
@@ -110,49 +103,38 @@ export default function Analytics() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Monthly Growth */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-lg p-6"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-card border border-border rounded-lg p-6">
             <h2 className="font-serif text-xl font-semibold mb-4">Monthly Growth</h2>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="month" tick={{ fill: 'hsl(220, 9%, 46%)' }} />
                 <YAxis tick={{ fill: 'hsl(220, 9%, 46%)' }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    color: 'hsl(var(--foreground))',
-                  }}
-                />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))' }} />
                 <Bar dataKey="views" fill="hsl(160, 84%, 39%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
 
           {/* Traffic Sources */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-card border border-border rounded-lg p-6"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-card border border-border rounded-lg p-6">
             <h2 className="font-serif text-xl font-semibold mb-4">Traffic Sources</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={sourceData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                  {sourceData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {totalViews > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie data={sourceData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                    {sourceData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                <p>No traffic data yet. Share your profile to get started!</p>
+              </div>
+            )}
           </motion.div>
         </div>
       </motion.div>
