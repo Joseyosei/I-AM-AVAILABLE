@@ -22,7 +22,7 @@ const sections = [
     content: [
       {
         q: 'What is I Am Available?',
-        a: 'I Am Available is a professional networking platform where you can openly signal your availability for collaboration opportunities—freelance work, equity deals, co-founding, advising, and more. Think of it as Bella Nazzari\'s "open to work" concept, but built for everyone.',
+        a: 'I Am Available is a professional networking platform where you can openly signal your availability for collaboration opportunities: freelance work, equity deals, co-founding, advising, and more. Think of it as Bella Nazzari\'s "open to work" concept, but built for everyone.',
       },
       {
         q: 'How do I create a profile?',

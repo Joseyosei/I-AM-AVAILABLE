@@ -21,6 +21,7 @@ import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 import Careers from "./pages/Careers";
 import Chat from "./pages/Chat";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/directory" element={<Directory />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/careers" element={<Careers />} />
+              <Route path="/about" element={<About />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />

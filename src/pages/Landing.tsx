@@ -71,7 +71,7 @@ const features = [
   {
     icon: Radio,
     title: 'Real-time Availability Signals',
-    description: 'Show the world you\'re available right now—no guesswork, no outdated profiles.',
+    description: 'Show the world you\'re available right now: no guesswork, no outdated profiles.',
   },
   {
     icon: UserPlus,
@@ -86,7 +86,7 @@ const features = [
   {
     icon: MessageSquare,
     title: 'Direct Contact',
-    description: 'Reach out directly via email, Twitter, or calendar—no middlemen, no recruiter spam.',
+    description: 'Reach out directly via email, Twitter, or calendar: no middlemen, no recruiter spam.',
   },
 ];
 
@@ -99,7 +99,7 @@ const whoItsFor = [
   {
     icon: Code,
     title: 'Developers',
-    description: 'Connect with projects that need your skills—from side projects to funded startups.',
+    description: 'Connect with projects that need your skills: from side projects to funded startups.',
   },
   {
     icon: Palette,
@@ -279,7 +279,7 @@ export default function Landing() {
             </p>
             <Link to="/signup">
               <Button size="lg" className="text-base px-8">
-                Create Your Profile — It's Free
+                Create Your Profile: It's Free
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

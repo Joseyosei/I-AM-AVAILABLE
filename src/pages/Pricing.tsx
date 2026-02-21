@@ -105,7 +105,11 @@ export default function Pricing() {
                   </ul>
 
                   {plan.tier === 'free' ? (
-                    <Link to="/signup" className="block"><Button variant="outline" className="w-full" size="lg">{plan.cta}</Button></Link>
+                    isCurrentPlan ? (
+                      <Button variant="outline" className="w-full" size="lg" disabled>Current Plan</Button>
+                    ) : (
+                      <Link to="/signup" className="block"><Button variant="outline" className="w-full" size="lg">{plan.cta}</Button></Link>
+                    )
                   ) : isCurrentPlan ? (
                     <Button variant="outline" className="w-full" size="lg" disabled>Current Plan</Button>
                   ) : (

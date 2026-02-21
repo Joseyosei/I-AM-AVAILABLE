@@ -1,69 +1,111 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { Bell, Eye, MessageSquare, Briefcase, UserPlus, CheckCheck, Trash2 } from 'lucide-react';
+import { Bell, Eye, MessageSquare, Briefcase, UserPlus, CheckCheck, Trash2, Loader2 } from 'lucide-react';
 
 interface Notification {
   id: string;
-  type: 'view' | 'message' | 'job' | 'connection';
+  type: string;
   title: string;
-  description: string;
-  time: string;
-  read: boolean;
+  message: string;
+  created_at: string;
+  is_read: boolean;
 }
 
-const initialNotifications: Notification[] = [
-  { id: '1', type: 'view', title: 'Profile viewed', description: 'Sarah Chen viewed your profile', time: '5 min ago', read: false },
-  { id: '2', type: 'message', title: 'New message', description: 'Marcus Johnson sent you a message', time: '15 min ago', read: false },
-  { id: '3', type: 'job', title: 'Job match found', description: 'Senior Full-Stack Developer at TechVentures matches your skills', time: '1 hour ago', read: false },
-  { id: '4', type: 'connection', title: 'New follower', description: 'Elena Rodriguez saved your profile', time: '2 hours ago', read: false },
-  { id: '5', type: 'view', title: 'Profile viewed', description: 'David Kim viewed your profile', time: '3 hours ago', read: true },
-  { id: '6', type: 'message', title: 'New message', description: 'Aisha Patel sent you a message', time: '5 hours ago', read: true },
-  { id: '7', type: 'job', title: 'New job posted', description: 'Freelance Brand Designer role posted by Bloom Agency', time: '1 day ago', read: true },
-  { id: '8', type: 'view', title: 'Profile viewed', description: 'Michael Brown viewed your profile', time: '1 day ago', read: true },
-  { id: '9', type: 'connection', title: 'Profile saved', description: 'James Wilson saved your profile', time: '2 days ago', read: true },
-];
-
-const typeIcons = {
+const typeIcons: Record<string, any> = {
   view: Eye,
   message: MessageSquare,
   job: Briefcase,
   connection: UserPlus,
+  info: Bell,
 };
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   view: 'text-primary',
   message: 'text-blue-500',
   job: 'text-yellow-500',
   connection: 'text-purple-500',
+  info: 'text-muted-foreground',
 };
 
 export default function Notifications() {
-  const { isAuthenticated, user } = useAuth();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
-  }
+  useEffect(() => {
+    if (!user) return;
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  const filtered = filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (data) setNotifications(data);
+      setLoading(false);
+    };
+    fetchNotifications();
 
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    // Real-time subscription
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setNotifications((prev) => [payload.new as Notification, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setNotifications((prev) => prev.map((n) => n.id === (payload.new as Notification).id ? payload.new as Notification : n));
+          } else if (payload.eventType === 'DELETE') {
+            setNotifications((prev) => prev.filter((n) => n.id !== (payload.old as any).id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  if (authLoading) return <DashboardLayout><div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
+  if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const filtered = filter === 'unread' ? notifications.filter((n) => !n.is_read) : notifications;
+
+  const markAllRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id);
+    if (unreadIds.length === 0) return;
+    await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
   };
 
-  const markRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const markRead = async (id: string) => {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
   };
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = async (id: string) => {
+    await supabase.from('notifications').delete().eq('id', id);
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const formatTime = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   };
 
   return (
@@ -94,7 +136,11 @@ export default function Notifications() {
         </div>
 
         <div className="space-y-2">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-16">
               <Bell className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="font-serif text-xl font-semibold mb-2">No notifications</h3>
@@ -102,7 +148,7 @@ export default function Notifications() {
             </div>
           ) : (
             filtered.map((notification, i) => {
-              const Icon = typeIcons[notification.type];
+              const Icon = typeIcons[notification.type] || Bell;
               return (
                 <motion.div
                   key={notification.id}
@@ -110,26 +156,24 @@ export default function Notifications() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
                   className={`flex items-start gap-4 p-4 rounded-lg border transition-colors cursor-pointer ${
-                    notification.read
-                      ? 'bg-card border-border'
-                      : 'bg-primary/5 border-primary/20'
+                    notification.is_read ? 'bg-card border-border' : 'bg-primary/5 border-primary/20'
                   }`}
                   onClick={() => markRead(notification.id)}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    notification.read ? 'bg-secondary' : 'bg-primary/10'
+                    notification.is_read ? 'bg-secondary' : 'bg-primary/10'
                   }`}>
-                    <Icon className={`w-5 h-5 ${typeColors[notification.type]}`} />
+                    <Icon className={`w-5 h-5 ${typeColors[notification.type] || 'text-muted-foreground'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className={`text-sm ${notification.read ? 'font-medium' : 'font-semibold'}`}>
+                      <p className={`text-sm ${notification.is_read ? 'font-medium' : 'font-semibold'}`}>
                         {notification.title}
                       </p>
-                      {!notification.read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                      {!notification.is_read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                     </div>
-                    <p className="text-sm text-muted-foreground">{notification.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
+                    <p className="text-sm text-muted-foreground">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatTime(notification.created_at)}</p>
                   </div>
                   <Button
                     variant="ghost"

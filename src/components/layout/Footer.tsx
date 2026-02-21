@@ -12,7 +12,7 @@ export function Footer() {
             </Link>
             <p className="text-muted-foreground text-sm max-w-md">
               The platform for professionals to signal their availability for collaboration.
-              No LinkedIn theater—just real connections.
+              No LinkedIn theater: just real connections.
             </p>
           </div>
 
@@ -33,6 +33,11 @@ export function Footer() {
               <li>
                 <Link to="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
                   Create Profile
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+                  About
                 </Link>
               </li>
               <li>
