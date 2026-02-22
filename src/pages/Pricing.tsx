@@ -1,12 +1,9 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Check, Sparkles, Loader2 } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
 
 const STRIPE_TIERS = {
   pro: { priceId: 'price_1T3Ge3I7iNRznjwrtQAQffYk', productId: 'prod_U1JGmLZxXS9uwV' },
@@ -36,26 +33,14 @@ const plans = [
 
 export default function Pricing() {
   const { isAuthenticated, profile } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
-  const handleSubscribe = async (tier: 'pro' | 'premium') => {
+  const handleSubscribe = (tier: 'pro' | 'premium') => {
     if (!isAuthenticated) {
       navigate('/signup');
       return;
     }
-    setLoadingTier(tier);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId: STRIPE_TIERS[tier].priceId },
-      });
-      if (error) throw error;
-      if (data?.url) window.open(data.url, '_blank');
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to start checkout', variant: 'destructive' });
-    }
-    setLoadingTier(null);
+    navigate(`/checkout?priceId=${STRIPE_TIERS[tier].priceId}`);
   };
 
   const currentTier = profile?.tier || 'free';
@@ -113,8 +98,8 @@ export default function Pricing() {
                   ) : isCurrentPlan ? (
                     <Button variant="outline" className="w-full" size="lg" disabled>Current Plan</Button>
                   ) : (
-                    <Button variant={plan.highlighted ? 'default' : 'outline'} className="w-full" size="lg" onClick={() => handleSubscribe(plan.tier as 'pro' | 'premium')} disabled={loadingTier === plan.tier}>
-                      {loadingTier === plan.tier ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</> : plan.cta}
+                    <Button variant={plan.highlighted ? 'default' : 'outline'} className="w-full" size="lg" onClick={() => handleSubscribe(plan.tier as 'pro' | 'premium')}>
+                      {plan.cta}
                     </Button>
                   )}
                 </motion.div>
