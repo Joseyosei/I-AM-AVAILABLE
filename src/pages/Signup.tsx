@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sparkles, Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import { motion } from 'framer-motion';
 
 export default function Signup() {
@@ -71,12 +72,7 @@ export default function Signup() {
         <motion.div className="w-full max-w-md" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
             <div className="flex justify-center mb-8">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-                  <Sparkles className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="font-serif text-xl font-semibold">I Am Available</span>
-              </div>
+              <img src={logo} alt="I Am Available" className="h-12" />
             </div>
             <h1 className="font-serif text-2xl font-bold text-center mb-8">Create your account</h1>
 

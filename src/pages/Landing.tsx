@@ -2,9 +2,6 @@ import { Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { 
-  Users, 
-  Sparkles, 
-  Clock, 
   Briefcase, 
   Code, 
   Palette, 
@@ -16,7 +13,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 function useCountUp(target: number, duration = 2000) {
   const [count, setCount] = useState(0);
@@ -61,11 +59,39 @@ function AnimatedStat({ target, label }: { target: number; label: string }) {
   );
 }
 
-const stats = [
-  { value: 1247, label: 'Active Profiles' },
-  { value: 3842, label: 'Connections Made' },
-  { value: 127, label: 'Companies Founded' },
-];
+function useLiveStats() {
+  const [stats, setStats] = useState([
+    { value: 0, label: 'Active Profiles' },
+    { value: 0, label: 'Connections Made' },
+    { value: 0, label: 'Companies Founded' },
+  ]);
+
+  const fetchStats = useCallback(async () => {
+    const [profiles, connections, companies] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('availability', 'unavailable'),
+      supabase.from('saved_profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('jobs').select('*', { count: 'exact', head: true }),
+    ]);
+    setStats([
+      { value: profiles.count ?? 0, label: 'Active Profiles' },
+      { value: connections.count ?? 0, label: 'Connections Made' },
+      { value: companies.count ?? 0, label: 'Companies Founded' },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+    const channel = supabase
+      .channel('landing-stats')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchStats)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'saved_profiles' }, fetchStats)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, fetchStats)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchStats]);
+
+  return stats;
+}
 
 const features = [
   {
@@ -128,6 +154,7 @@ const stagger = {
 };
 
 export default function Landing() {
+  const stats = useLiveStats();
   return (
     <PublicLayout>
       {/* Hero Section */}

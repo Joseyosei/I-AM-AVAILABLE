@@ -74,15 +74,15 @@ export default function Pricing() {
               const isCurrentPlan = currentTier === plan.tier;
               return (
                 <motion.div key={plan.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}
-                  className={`pricing-card ${plan.highlighted ? 'pricing-card-popular' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  className={`pricing-card overflow-visible relative ${plan.highlighted ? 'pricing-card-popular' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
+                  {plan.badge && !isCurrentPlan && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium"><Sparkles className="w-3.5 h-3.5" />{plan.badge}</span>
                     </div>
                   )}
                   {isCurrentPlan && (
-                    <div className="absolute -top-3 right-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">Your Plan</span>
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">Current Plan</span>
                     </div>
                   )}
 
