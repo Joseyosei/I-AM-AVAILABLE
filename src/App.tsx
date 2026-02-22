@@ -22,6 +22,7 @@ import Profile from "./pages/Profile";
 import Careers from "./pages/Careers";
 import Chat from "./pages/Chat";
 import About from "./pages/About";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/dashboard/settings" element={<Settings />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="/profile/:username" element={<Profile />} />
+              <Route path="/checkout" element={<Checkout />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
