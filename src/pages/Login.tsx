@@ -17,6 +17,18 @@ export default function Login() {
   const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
+  // While loading=true and authenticated, the profile is still being fetched.
+  // Show a spinner so the form never flashes back after a successful login.
+  if (loading && isAuthenticated) {
+    return (
+      <PublicLayout hideFooter>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </PublicLayout>
+    );
+  }
+
   if (!loading && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }

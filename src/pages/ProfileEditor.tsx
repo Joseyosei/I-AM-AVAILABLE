@@ -57,7 +57,7 @@ export default function ProfileEditor() {
 
   if (loading) return <DashboardLayout><div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!profile) return <DashboardLayout><div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
+  // profile may be null for brand-new users — the editor should still render so they can create one
 
   const tier = (profile.tier || 'free') as keyof typeof TIER_LIMITS;
   const tierLimits = TIER_LIMITS[tier];
