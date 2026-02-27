@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,17 @@ import { OPEN_TO_LABELS, OpenToOption, AvailabilityStatus, TIER_LIMITS } from '@
 import { Upload, X, Plus, Loader2, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ProfileEditor() {
-  const { isAuthenticated, profile, loading, updateProfile } = useAuth();
+  const { isAuthenticated, profile, user, loading, updateProfile } = useAuth();
   const { toast } = useToast();
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -32,6 +37,7 @@ export default function ProfileEditor() {
     telegram: '',
     calendar_link: '',
     portfolio_links: [] as string[],
+    avatar: '',
   });
   const [newSkill, setNewSkill] = useState('');
   const [newPortfolioLink, setNewPortfolioLink] = useState('');
@@ -51,6 +57,7 @@ export default function ProfileEditor() {
         telegram: profile.telegram || '',
         calendar_link: profile.calendar_link || '',
         portfolio_links: profile.portfolio_links || [],
+        avatar: profile.avatar || '',
       });
     }
   }, [profile]);
@@ -59,10 +66,54 @@ export default function ProfileEditor() {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   // profile may be null for brand-new users — the editor should still render so they can create one
 
-  const tier = (profile.tier || 'free') as keyof typeof TIER_LIMITS;
+  const tier = (profile?.tier || 'free') as keyof typeof TIER_LIMITS;
   const tierLimits = TIER_LIMITS[tier];
   const canAddSkill = formData.skills.length < tierLimits.skills;
   const canAddPortfolioLink = formData.portfolio_links.length < tierLimits.portfolioLinks;
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarError(null);
+
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('File is too large. Maximum size is 2MB.');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${user!.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+
+      const publicUrl = urlData.publicUrl;
+
+      await updateProfile({ avatar: publicUrl });
+      setFormData(prev => ({ ...prev, avatar: publicUrl }));
+
+      toast({ title: 'Photo updated!', description: 'Your profile photo has been saved.' });
+    } catch (err: any) {
+      setAvatarError(err.message ?? 'Upload failed. Please try again.');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -111,12 +162,31 @@ export default function ProfileEditor() {
           <h2 className="font-serif text-lg font-semibold mb-4">Profile Photo</h2>
           <div className="flex items-center gap-6">
             <Avatar className="w-24 h-24 border-2 border-border">
-              <AvatarImage src={profile.avatar} alt={formData.name} />
+              <AvatarImage src={formData.avatar || profile?.avatar} alt={formData.name} />
               <AvatarFallback className="bg-secondary text-2xl font-medium">{initials}</AvatarFallback>
             </Avatar>
             <div>
-              <Button variant="outline" className="gap-2"><Upload className="w-4 h-4" />Upload Photo</Button>
-              <p className="text-xs text-muted-foreground mt-2">Max file size: 2MB</p>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+              >
+                {isUploadingAvatar
+                  ? <><Loader2 className="w-4 h-4 animate-spin" />Uploading...</>
+                  : <><Upload className="w-4 h-4" />Upload Photo</>
+                }
+              </Button>
+              {avatarError && <p className="text-xs text-destructive mt-2">{avatarError}</p>}
+              <p className="text-xs text-muted-foreground mt-2">JPG, PNG or WebP · Max 2MB</p>
             </div>
           </div>
         </section>

@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { FilterState, OpenToOption, OPEN_TO_LABELS, AvailabilityStatus, UserProfile } from '@/lib/types';
+import { dbToUserProfile } from '@/lib/profileUtils';
 import { Search, SlidersHorizontal, X, Users, MapPin, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -23,32 +24,6 @@ const initialFilters: FilterState & { location: string; skill: string } = {
   location: '',
   skill: '',
 };
-
-function dbToUserProfile(p: any): UserProfile {
-  return {
-    id: p.id,
-    name: p.name,
-    email: p.email,
-    role: p.role,
-    location: p.location,
-    bio: p.bio,
-    avatar: p.avatar,
-    availability: p.availability,
-    openTo: p.open_to || [],
-    skills: p.skills || [],
-    contactEmail: p.contact_email,
-    twitter: p.twitter,
-    telegram: p.telegram,
-    calendarLink: p.calendar_link,
-    portfolioLinks: p.portfolio_links || [],
-    tier: p.tier,
-    featured: p.featured,
-    profileViews: p.profile_views,
-    contactClicks: p.contact_clicks,
-    createdAt: p.created_at,
-    lastActive: p.last_active,
-  };
-}
 
 export default function Directory() {
   const [filters, setFilters] = useState(initialFilters);
