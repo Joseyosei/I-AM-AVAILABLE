@@ -1,3 +1,28 @@
+// Resize an image file to a max dimension and return a base64 JPEG data URL.
+// Stored directly in profiles.avatar TEXT — no Supabase Storage bucket required.
+function resizeImageToBase64(file: File, maxPx = 400): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read file.'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to decode image.'));
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = e.target!.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -9,14 +34,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { OPEN_TO_LABELS, OpenToOption, AvailabilityStatus, TIER_LIMITS } from '@/lib/types';
+import { OPEN_TO_LABELS, OpenToOption, TIER_LIMITS } from '@/lib/types';
 import { Upload, X, Plus, Loader2, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 export default function ProfileEditor() {
-  const { isAuthenticated, profile, user, loading, updateProfile } = useAuth();
+  const { isAuthenticated, profile, loading, updateProfile } = useAuth();
   const { toast } = useToast();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -77,8 +101,8 @@ export default function ProfileEditor() {
 
     setAvatarError(null);
 
-    if (file.size > 2 * 1024 * 1024) {
-      setAvatarError('File is too large. Maximum size is 2MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('File is too large. Maximum size is 5MB.');
       return;
     }
     if (!file.type.startsWith('image/')) {
@@ -88,24 +112,11 @@ export default function ProfileEditor() {
 
     setIsUploadingAvatar(true);
     try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${user!.id}/avatar.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(path);
-
-      const publicUrl = urlData.publicUrl;
-
-      await updateProfile({ avatar: publicUrl });
-      setFormData(prev => ({ ...prev, avatar: publicUrl }));
-
+      // Resize client-side to 400×400px max and store as base64 JPEG
+      // directly in profiles.avatar — no Supabase Storage bucket required
+      const base64 = await resizeImageToBase64(file, 400);
+      await updateProfile({ avatar: base64 });
+      setFormData(prev => ({ ...prev, avatar: base64 }));
       toast({ title: 'Photo updated!', description: 'Your profile photo has been saved.' });
     } catch (err: any) {
       setAvatarError(err.message ?? 'Upload failed. Please try again.');
@@ -186,7 +197,7 @@ export default function ProfileEditor() {
                 }
               </Button>
               {avatarError && <p className="text-xs text-destructive mt-2">{avatarError}</p>}
-              <p className="text-xs text-muted-foreground mt-2">JPG, PNG or WebP · Max 2MB</p>
+              <p className="text-xs text-muted-foreground mt-2">JPG, PNG or WebP · Max 5MB</p>
             </div>
           </div>
         </section>

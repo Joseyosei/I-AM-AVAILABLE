@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  MapPin, 
-  Briefcase, 
-  Clock, 
-  DollarSign, 
-  Search, 
-  Building2, 
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  MapPin,
+  Briefcase,
+  Clock,
+  DollarSign,
+  Search,
+  Building2,
   ArrowRight,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -39,6 +41,7 @@ interface Job {
   description: string;
   skills: string[];
   apply_url: string | null;
+  posted_by: string;
 }
 
 const typeColors: Record<string, string> = {
@@ -56,12 +59,14 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function Careers() {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,6 +91,24 @@ export default function Careers() {
     const matchesType = typeFilter === 'all' || job.job_type === typeFilter;
     return matchesSearch && matchesType;
   });
+
+  const handleDelete = async (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent opening the apply dialog
+    if (!confirm('Delete this job post? This cannot be undone.')) return;
+    setDeletingId(jobId);
+    const { error } = await supabase
+      .from('jobs')
+      .delete()
+      .eq('id', jobId)
+      .eq('posted_by', user!.id);
+    if (error) {
+      toast({ title: 'Error', description: 'Could not delete the job post.', variant: 'destructive' });
+    } else {
+      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+      toast({ title: 'Deleted', description: 'Job post removed successfully.' });
+    }
+    setDeletingId(null);
+  };
 
   const handleApply = () => {
     setApplyDialogOpen(false);
@@ -203,6 +226,21 @@ export default function Careers() {
                         <Clock className="w-3.5 h-3.5" />
                         {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
                       </div>
+                      {user && job.posted_by === user.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 h-8 px-2"
+                          onClick={(e) => handleDelete(job.id, e)}
+                          disabled={deletingId === job.id}
+                        >
+                          {deletingId === job.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Trash2 className="w-3.5 h-3.5" />
+                          }
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
